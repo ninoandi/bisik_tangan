@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
 import 'register_screen.dart';
 import 'lupa_pass_screen.dart';
+import 'dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,7 +12,35 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final AuthService authService = AuthService();
   bool _rememberMe = false;
+
+  Future<void> login() async {
+    final response = await authService.loginUser(
+      emailController.text,
+      passwordController.text,
+    );
+
+    if (!mounted) return; // Cegah akses context jika widget sudah di-dispose
+
+    if (response["status"] == "success") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login Berhasil')),
+      );
+
+      // Navigasi ke halaman Dashboard dan hapus halaman login dari stack
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login Gagal: ${response['message']}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     prefixIcon: const Icon(Icons.email),
@@ -58,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   obscureText: true,
+                  controller: passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),

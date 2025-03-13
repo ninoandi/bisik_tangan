@@ -1,7 +1,56 @@
 import 'package:flutter/material.dart';
+import 'auth_service.dart';
+import 'login_screen.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  RegisterScreenState createState() => RegisterScreenState();
+}
+
+class RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  Future<void> registerUser() async {
+    // Validasi confirm password sebelum mengirim ke API
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Password dan Confirm Password tidak cocok!"),
+            backgroundColor: Colors.red),
+      );
+      return; // Hentikan proses jika password tidak sama
+    }
+
+    var url = Uri.parse(
+        "http://localhost/bisik_tangan/api/register.php"); // Ganti dengan URL API
+    var response = await http.post(url, body: {
+      "name": usernameController.text,
+      "email": emailController.text,
+      "password": passwordController.text,
+    });
+
+    var data = jsonDecode(response.body);
+    if (data["error"] == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["message"]), backgroundColor: Colors.green),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["message"]), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +89,7 @@ class RegisterScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               TextField(
+                controller: emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
                   prefixIcon: const Icon(Icons.email),
@@ -50,6 +100,7 @@ class RegisterScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: usernameController,
                 decoration: InputDecoration(
                   labelText: 'Username',
                   prefixIcon: const Icon(Icons.person),
@@ -60,11 +111,22 @@ class RegisterScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
-                obscureText: true,
+                controller: passwordController,
+                obscureText: _obscurePassword, // Pastikan variabel digunakan
                 decoration: InputDecoration(
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: const Icon(Icons.visibility),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword =
+                            !_obscurePassword; // Toggle visibility
+                      });
+                    },
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -72,11 +134,23 @@ class RegisterScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
-                obscureText: true,
+                controller: confirmPasswordController,
+                obscureText:
+                    _obscureConfirmPassword, // Pastikan variabel digunakan
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
                   prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: const Icon(Icons.visibility),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscureConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword =
+                            !_obscureConfirmPassword; // Toggle visibility
+                      });
+                    },
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
